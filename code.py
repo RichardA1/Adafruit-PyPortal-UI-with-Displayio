@@ -1,3 +1,4 @@
+import time
 import board
 import displayio
 import busio
@@ -37,12 +38,6 @@ ts = adafruit_touchscreen.Touchscreen(board.TOUCH_YD, board.TOUCH_YU,
                                       calibration=((5200, 59000), (5800, 57000)),
                                       size=(240, 320))
 
-
-# Load and setup Background image
-bitmap_file = open("/BGimage.bmp", "rb")
-color_bitmap = displayio.OnDiskBitmap(bitmap_file)
-bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=displayio.ColorConverter())
-
 # ---------- Set the font and preload letters ----------
 # Be sure to put your font into a folder named "fonts".
 font = bitmap_font.load_font("/fonts/Helvetica-Bold-16.bdf")
@@ -57,7 +52,45 @@ view1 = displayio.Group(max_size=15)
 view2 = displayio.Group(max_size=15)
 view3 = displayio.Group(max_size=15)
 
-splash.append(bg_sprite)
+## ------------- This will handel switching Images and Icons
+bg_group = displayio.Group(max_size=1)
+splash.append(bg_group)
+
+icon_group = displayio.Group(max_size=1)
+icon_group.x = 180
+icon_group.y = 160
+icon_group.scale = 1
+view2.append(icon_group)
+
+def set_image(group, filename):
+    """Set the image file for a given goup for display.
+    This is most useful for Icons or image slideshows.
+        :param group: The chosen group
+        :param filename: The filename of the chosen image
+    """
+    print("Set icon to ", filename)
+    if group:
+        group.pop()
+
+    if not filename:
+        return  # we're done, no icon desired
+    try:
+        if image_file:
+            image_file.close
+    except NameError:
+        pass
+    image_file = open(filename, "rb")
+    image = displayio.OnDiskBitmap(image_file)
+    try:
+        image_sprite = displayio.TileGrid(image, pixel_shader=displayio.ColorConverter())
+    except TypeError:
+        image_sprite = displayio.TileGrid(image, pixel_shader=displayio.ColorConverter(), position=(0,0))
+    group.append(image_sprite)
+
+set_image(bg_group,"/images/STRimage.bmp")
+
+board.DISPLAY.show(splash)
+
 
 
 
@@ -70,11 +103,11 @@ BUTTON_MARGIN = 10
 # Button Objects
 # 320x240
 
-button_1 = Button(x=0, y=220,
+button_switch = Button(x=0, y=220,
                   width=120, height=BUTTON_HEIGHT,
                   label="Button 1", label_font=font, label_color=0x505050,
                   fill_color=0x9e9e9e, outline_color=0x464646)
-buttons.append(button_1)
+buttons.append(button_switch)
 
 button_2 = Button(x=120, y=220,
                   width=120, height=BUTTON_HEIGHT,
@@ -82,23 +115,23 @@ button_2 = Button(x=120, y=220,
                   fill_color=0x9e9e9e, outline_color=0x464646)
 buttons.append(button_2)
 
-button_3 = Button(x=0, y=0,
+button_view1 = Button(x=0, y=0,
                   width=80, height=40,
                   label="Feed1", label_font=font, label_color=0x505050,
                   fill_color=0x9e9e9e, outline_color=0x464646,selected_outline=0x838383,  selected_label=0x838383)
-buttons.append(button_3)
+buttons.append(button_view1)
 
-button_4 = Button(x=80, y=0,
+button_view2 = Button(x=80, y=0,
                   width=80, height=40,
                   label="Feed2", label_font=font, label_color=0x505050,
                   fill_color=0x9e9e9e, outline_color=0x464646,selected_outline=0x838383, selected_label=0x838383)
-buttons.append(button_4)
+buttons.append(button_view2)
 
-button_5 = Button(x=160, y=0,
+button_view3 = Button(x=160, y=0,
                   width=80, height=40,
                   label="Data", label_font=font, label_color=0x505050,
                   fill_color=0x9e9e9e, outline_color=0x464646,selected_outline=0x838383, selected_label=0x838383)
-buttons.append(button_5)
+buttons.append(button_view3)
 
 button_6 = Button(x=150, y=170,
                   width=80, height=40,
@@ -177,19 +210,23 @@ glyph_h = glyph_box[1]+abs(glyph_box[3])
 def text_box_top(string):
     return round(string.count("\n")*glyph_h/2)-glyph_box[1]
 
+
+
+set_image(bg_group,"/images/BGimage.bmp")
 board.DISPLAY.show(splash)
+
 set_backlight(0.3)
-button_3.selected = False
-button_4.selected = True
-button_5.selected = True
+button_view1.selected = False
+button_view2.selected = True
+button_view3.selected = True
 showLayer(view1)
 hideLayer(view2)
 hideLayer(view3)
 view_live = 1
 
 button1_state = 0
-button_1.label = "OFF"
-button_1.selected = True
+button_switch.label = "OFF"
+button_switch.selected = True
 
 feed1_text = wrap_nicely('The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.'.format(glyph_h, glyph_box[1]), 30)
 feed1_label.y = text_box_top(feed1_text)+60
@@ -244,9 +281,9 @@ while True:
                     print("Button 2 released")
                     b.selected = False
                 if i == 2:
-                    button_3.selected = False
-                    button_4.selected = True
-                    button_5.selected = True
+                    button_view1.selected = False
+                    button_view2.selected = True
+                    button_view3.selected = True
                     showLayer(view1)
                     hideLayer(view2)
                     hideLayer(view3)
@@ -256,21 +293,22 @@ while True:
                     print("View1 On")
                     b.selected = False
                 if i == 3:
-                    button_3.selected = True
-                    button_4.selected = False
-                    button_5.selected = True
+                    button_view1.selected = True
+                    button_view2.selected = False
+                    button_view3.selected = True
                     hideLayer(view1)
                     showLayer(view2)
                     hideLayer(view3)
                     view_live = 2
+                    set_image(icon_group,"/images/"+"partly-cloudy-night"+".bmp")
                     while ts.touch_point:
                         pass
                     print("View2 On")
                     b.selected = False
                 if i == 4:
-                    button_3.selected = True
-                    button_4.selected = True
-                    button_5.selected = False
+                    button_view1.selected = True
+                    button_view2.selected = True
+                    button_view3.selected = False
                     hideLayer(view1)
                     hideLayer(view2)
                     showLayer(view3)
@@ -284,6 +322,5 @@ while True:
                         pass
                     print("Serial Button Pressed")
                     b.selected = False
-
 #print(dir(ts))
 #board.DISPLAY.show()
