@@ -7,7 +7,7 @@ from analogio import AnalogIn
 import neopixel
 import adafruit_adt7410
 from adafruit_bitmap_font import bitmap_font
-from adafruit_display_text.label import Label
+from adafruit_display_text import label
 from adafruit_button import Button
 import adafruit_touchscreen
 from adafruit_pyportal import PyPortal
@@ -134,29 +134,31 @@ font.load_glyphs(b'abcdefghjiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789
 
 # Default Label styling:
 TABS_X = 5
-TAPS_Y = 60
+TABS_Y = 50
 
 BUTTON_HEIGHT = int(ts._size[1]/3.2)
 BUTTON_WIDTH = int(ts._size[0]/2)
 BUTTON_Y = int(ts._size[1]-BUTTON_HEIGHT)
 
 # Text Label Objects
-feed1_label = Label(font, text="Text Wondow 1", color=0xE39300, max_glyphs=200)
+feed1_label = label.Label(font, text="Text Wondow 1", color=0xE39300, max_glyphs=200)
 feed1_label.x = TABS_X
-feed1_label.y = TAPS_Y
+feed1_label.y = TABS_Y
 view1.append(feed1_label)
 
-feed2_label = Label(font, text="Text Wondow 2", color=0xFFFFFF, max_glyphs=200)
-feed2_label.x = TABS_X
-feed2_label.y = TAPS_Y
+feed2_label = label.Label(font, text="Text Wondow 2", color=0xFFFFFF, max_glyphs=200)
+#feed2_label.x = TABS_X
+#feed2_label.y = TABS_Y
+feed2_label.anchor_point = (1.0, 1.0)
+feed2_label.anchored_position = (100, 50)
 view2.append(feed2_label)
 
-sensors_label = Label(font, text="Data View", color=0x03AD31, max_glyphs=200)
+sensors_label = label.Label(font, text="Data View", color=0x03AD31, max_glyphs=200)
 sensors_label.x = TABS_X
-sensors_label.y = TAPS_Y
+sensors_label.y = TABS_Y
 view3.append(sensors_label)
 
-sensor_data = Label(font, text="Data View", color=0x03AD31, max_glyphs=100)
+sensor_data = label.Label(font, text="Data View", color=0x03AD31, max_glyphs=100)
 sensor_data.x = TABS_X+15
 sensor_data.y = 170
 view3.append(sensor_data)
@@ -169,15 +171,21 @@ def wrap_words(string, max_chars):
         new_text += '\n'+w
     return new_text
 
-# get the dimentions of the font glyphs
-glyph_box = font.get_bounding_box()
-
-# figure out the hight of each text line
-glyph_h = glyph_box[1]+abs(glyph_box[3])
-
-# Function for moving the Label text to a position that keeps the top in the same place.
-def text_box_top(string):
-    return round(string.count("\n")*glyph_h/2)-glyph_box[1]
+text_hight = label.Label(font, text="M", color=0x03AD31, max_glyphs=10)
+# return a reformatted string with word wrapping using PyPortal.wrap_nicely
+def text_box(target, top, max_chars, string):
+    text = pyportal.wrap_nicely(string, max_chars)
+    new_text = ""
+    test = ""
+    for w in text:
+        new_text += '\n'+w
+        test += 'M\n'
+    text_hight.text = test # Odd things happen without this
+    glyph_box = text_hight.bounding_box
+    print(glyph_box[3])
+    target.text = "" # Odd things happen without this
+    target.y = round(glyph_box[3]/2)+top
+    target.text = new_text
 
 # ---------- Display Buttons ------------- #
 # This group will make it easy for us to read a button press later.
@@ -313,17 +321,12 @@ switch_state = 0
 button_switch.label = "OFF"
 button_switch.selected = True
 
-feed1_text = wrap_words('The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.'.format(glyph_h, glyph_box[1]), 30)
-feed1_label.y = text_box_top(feed1_text)+60
-feed1_label.text = feed1_text
+text_box(feed1_label, TABS_Y, 30, 'The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.')
 
-feed2_text = wrap_words('Tap on the Icon button to meet a new friend.', 18)
-feed2_label.y = text_box_top(feed2_text)+60
-feed2_label.text = feed2_text
-
-feed3_text = wrap_words("This screen can display sensor readings and tap Sound to play a WAV file.", 28)
-sensors_label.y = text_box_top(feed3_text)+60
-sensors_label.text = feed3_text
+feed2_label.text = wrap_words('Tap on the Icon button to meet a new friend.', 18)
+#text_box(feed2_label, TABS_Y, 18, 'Tap on the Icon button to meet a new friend.')
+print(dir(feed2_label))
+text_box(sensors_label, TABS_Y, 28, 'This screen can display sensor readings and tap Sound to play a WAV file.')
 
 board.DISPLAY.show(splash)
 
@@ -352,6 +355,7 @@ while True:
                         pass
                 if i == 1 and view_live != 2: # button_view2 pressed and view2 not visable
                     pyportal.play_file(soundTab)
+                    feed2_label.text = wrap_words('Tap on the Icon button to meet a new friend.', 18)
                     switch_view(2)
                     while ts.touch_point:
                         pass
@@ -418,10 +422,12 @@ while True:
                     elif icon == 3:
                         icon_name = "Billie"
                     b.selected = False
-                    feed2_text = wrap_words('Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
-                    feed2_label.y = text_box_top(feed2_text)+60
-                    feed2_label.text = "" # Clear out text to fix possible re-draw errors.
-                    feed2_label.text = feed2_text
+                    #feed2_text = wrap_words('Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
+                    #feed2_label.y = text_box_top(feed2_text)+60
+                    #feed2_label.text = "" # Clear out text to fix possible re-draw errors.
+                    #feed2_label.text = feed2_text
+                    feed2_label.text = wrap_words('Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
+                    #text_box(feed2_label, TABS_Y, 18,'Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name))
                     set_image(icon_group,"/images/"+icon_name+".bmp")
                 if i == 6 and view_live == 3: # button_sound pressed and view3 is visable
                     b.selected = True
