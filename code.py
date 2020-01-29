@@ -163,14 +163,6 @@ sensor_data.x = TABS_X+15
 sensor_data.y = 170
 view3.append(sensor_data)
 
-# return a reformatted string with word wrapping using PyPortal.wrap_nicely
-def wrap_words(string, max_chars):
-    text = pyportal.wrap_nicely(string, max_chars)
-    new_text = ""
-    for w in text:
-        new_text += '\n'+w
-    return new_text
-
 text_hight = label.Label(font, text="M", color=0x03AD31, max_glyphs=10)
 # return a reformatted string with word wrapping using PyPortal.wrap_nicely
 def text_box(target, top, max_chars, string):
@@ -323,9 +315,8 @@ button_switch.selected = True
 
 text_box(feed1_label, TABS_Y, 30, 'The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.')
 
-feed2_label.text = wrap_words('Tap on the Icon button to meet a new friend.', 18)
-#text_box(feed2_label, TABS_Y, 18, 'Tap on the Icon button to meet a new friend.')
-print(dir(feed2_label))
+text_box(feed2_label, TABS_Y, 18, 'Tap on the Icon button to meet a new friend.')
+
 text_box(sensors_label, TABS_Y, 28, 'This screen can display sensor readings and tap Sound to play a WAV file.')
 
 board.DISPLAY.show(splash)
@@ -355,7 +346,6 @@ while True:
                         pass
                 if i == 1 and view_live != 2: # button_view2 pressed and view2 not visable
                     pyportal.play_file(soundTab)
-                    feed2_label.text = wrap_words('Tap on the Icon button to meet a new friend.', 18)
                     switch_view(2)
                     while ts.touch_point:
                         pass
@@ -422,12 +412,7 @@ while True:
                     elif icon == 3:
                         icon_name = "Billie"
                     b.selected = False
-                    #feed2_text = wrap_words('Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
-                    #feed2_label.y = text_box_top(feed2_text)+60
-                    #feed2_label.text = "" # Clear out text to fix possible re-draw errors.
-                    #feed2_label.text = feed2_text
-                    feed2_label.text = wrap_words('Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
-                    #text_box(feed2_label, TABS_Y, 18,'Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name))
+                    text_box(feed2_label, TABS_Y, 18,'Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name))
                     set_image(icon_group,"/images/"+icon_name+".bmp")
                 if i == 6 and view_live == 3: # button_sound pressed and view3 is visable
                     b.selected = True
