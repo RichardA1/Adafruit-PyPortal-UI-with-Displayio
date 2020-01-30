@@ -7,7 +7,7 @@ from analogio import AnalogIn
 import neopixel
 import adafruit_adt7410
 from adafruit_bitmap_font import bitmap_font
-from adafruit_display_text import label
+from adafruit_display_text.label import Label
 from adafruit_button import Button
 import adafruit_touchscreen
 from adafruit_pyportal import PyPortal
@@ -55,6 +55,9 @@ def set_backlight(val):
     val = max(0, min(1.0, val))
     board.DISPLAY.auto_brightness = False
     board.DISPLAY.brightness = val
+
+# Set the Backlight
+set_backlight(0.3)
 
 # Touchscreen setup
 # ------Rotate 270:
@@ -136,36 +139,30 @@ font.load_glyphs(b'abcdefghjiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789
 TABS_X = 5
 TABS_Y = 50
 
-BUTTON_HEIGHT = int(ts._size[1]/3.2)
-BUTTON_WIDTH = int(ts._size[0]/2)
-BUTTON_Y = int(ts._size[1]-BUTTON_HEIGHT)
-
 # Text Label Objects
-feed1_label = label.Label(font, text="Text Wondow 1", color=0xE39300, max_glyphs=200)
+feed1_label = Label(font, text="Text Wondow 1", color=0xE39300, max_glyphs=200)
 feed1_label.x = TABS_X
 feed1_label.y = TABS_Y
 view1.append(feed1_label)
 
-feed2_label = label.Label(font, text="Text Wondow 2", color=0xFFFFFF, max_glyphs=200)
-#feed2_label.x = TABS_X
-#feed2_label.y = TABS_Y
-feed2_label.anchor_point = (1.0, 1.0)
-feed2_label.anchored_position = (100, 50)
+feed2_label = Label(font, text="Text Wondow 2", color=0xFFFFFF, max_glyphs=200)
+feed2_label.x = TABS_X
+feed2_label.y = TABS_Y
 view2.append(feed2_label)
 
-sensors_label = label.Label(font, text="Data View", color=0x03AD31, max_glyphs=200)
+sensors_label = Label(font, text="Data View", color=0x03AD31, max_glyphs=200)
 sensors_label.x = TABS_X
 sensors_label.y = TABS_Y
 view3.append(sensors_label)
 
-sensor_data = label.Label(font, text="Data View", color=0x03AD31, max_glyphs=100)
+sensor_data = Label(font, text="Data View", color=0x03AD31, max_glyphs=100)
 sensor_data.x = TABS_X+15
 sensor_data.y = 170
 view3.append(sensor_data)
 
-text_hight = label.Label(font, text="M", color=0x03AD31, max_glyphs=10)
+text_hight = Label(font, text="M", color=0x03AD31, max_glyphs=10)
 # return a reformatted string with word wrapping using PyPortal.wrap_nicely
-def text_box(target, top, max_chars, string):
+def text_box(target, top, string, max_chars):
     text = pyportal.wrap_nicely(string, max_chars)
     new_text = ""
     test = ""
@@ -174,26 +171,27 @@ def text_box(target, top, max_chars, string):
         test += 'M\n'
     text_hight.text = test # Odd things happen without this
     glyph_box = text_hight.bounding_box
-    print(glyph_box[3])
     target.text = "" # Odd things happen without this
-    target.y = round(glyph_box[3]/2)+top
+    target.y = int(glyph_box[3]/2)+top
     target.text = new_text
 
 # ---------- Display Buttons ------------- #
-# This group will make it easy for us to read a button press later.
-buttons = []
-
 # Default button styling:
+BUTTON_HEIGHT = 40
+BUTTON_WIDTH = 80
+
+# We want three buttons across the top of the screen
 TAPS_HEIGHT = 40
 TAPS_WIDTH = int(ts._size[0]/3)
 TAPS_Y = 0
 
-BUTTON_HEIGHT = int(ts._size[1]/3.2)
-BUTTON_WIDTH = int(ts._size[0]/2)
-BUTTON_Y = int(ts._size[1]-BUTTON_HEIGHT)
+# We want two big buttons at the bottom of the screen
+BIG_BUTTON_HEIGHT = int(ts._size[1]/3.2)
+BIG_BUTTON_WIDTH = int(ts._size[0]/2)
+BIG_BUTTON_Y = int(ts._size[1]-BIG_BUTTON_HEIGHT)
 
-S_BUTTON_HEIGHT = 40
-S_BUTTON_WIDTH = 80
+# This group will make it easy for us to read a button press later.
+buttons = []
 
 # Main User Interface Buttons
 button_view1 = Button(x=0, y=0,
@@ -220,16 +218,16 @@ button_view3 = Button(x=TAPS_WIDTH*2, y=0,
                   selected_label=0x525252)
 buttons.append(button_view3) # adding this button to the buttons group
 
-button_switch = Button(x=0, y=BUTTON_Y,
-                  width=BUTTON_WIDTH, height=BUTTON_HEIGHT,
+button_switch = Button(x=0, y=BIG_BUTTON_Y,
+                  width=BIG_BUTTON_WIDTH, height=BIG_BUTTON_HEIGHT,
                   label="Switch", label_font=font, label_color=0xff7e00,
                   fill_color=0x5c5b5c, outline_color=0x767676,
                   selected_fill=0x1a1a1a, selected_outline=0x2e2e2e,
                   selected_label=0x525252)
 buttons.append(button_switch) # adding this button to the buttons group
 
-button_2 = Button(x=BUTTON_WIDTH, y=BUTTON_Y,
-                  width=BUTTON_WIDTH, height=BUTTON_HEIGHT,
+button_2 = Button(x=BIG_BUTTON_WIDTH, y=BIG_BUTTON_Y,
+                  width=BIG_BUTTON_WIDTH, height=BIG_BUTTON_HEIGHT,
                   label="Button", label_font=font, label_color=0xff7e00,
                   fill_color=0x5c5b5c, outline_color=0x767676,
                   selected_fill=0x1a1a1a, selected_outline=0x2e2e2e,
@@ -243,7 +241,7 @@ for b in buttons:
 
 # Make a button to change the icon image on view2
 button_icon = Button(x=150, y=60,
-                  width=S_BUTTON_WIDTH, height=S_BUTTON_HEIGHT,
+                  width=BUTTON_WIDTH, height=BUTTON_HEIGHT,
                   label="Icon", label_font=font, label_color=0xffffff,
                   fill_color=0x8900ff, outline_color=0xbc55fd,
                   selected_fill=0x5a5a5a, selected_outline=0xff6600,
@@ -255,7 +253,7 @@ view2.append(button_icon.group)
 
 # Make a button to play a sound on view2
 button_sound = Button(x=150, y=170,
-                  width=S_BUTTON_WIDTH, height=S_BUTTON_HEIGHT,
+                  width=BUTTON_WIDTH, height=BUTTON_HEIGHT,
                   label="Sound", label_font=font, label_color=0xffffff,
                   fill_color=0x8900ff, outline_color=0xbc55fd,
                   selected_fill=0x5a5a5a, selected_outline=0xff6600,
@@ -296,11 +294,8 @@ def switch_view(i):
         view_live = 3
         print("View3 On")
 
-view_live = 1
-icon = 1
-icon_name = "Ruby"
 
-set_backlight(0.3)
+# Set veriables and startup states
 button_view1.selected = False
 button_view2.selected = True
 button_view3.selected = True
@@ -308,26 +303,27 @@ showLayer(view1)
 hideLayer(view2)
 hideLayer(view3)
 
+view_live = 1
+icon = 1
+icon_name = "Ruby"
 button_mode = 1
 switch_state = 0
 button_switch.label = "OFF"
 button_switch.selected = True
 
-text_box(feed1_label, TABS_Y, 30, 'The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.')
+# Update out Labels with display text.
+text_box(feed1_label, TABS_Y, 'The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.', 30)
 
-text_box(feed2_label, TABS_Y, 18, 'Tap on the Icon button to meet a new friend.')
+text_box(feed2_label, TABS_Y, 'Tap on the Icon button to meet a new friend.', 18)
 
-text_box(sensors_label, TABS_Y, 28, 'This screen can display sensor readings and tap Sound to play a WAV file.')
+text_box(sensors_label, TABS_Y, 'This screen can display sensor readings and tap Sound to play a WAV file.', 28)
 
 board.DISPLAY.show(splash)
 
 # ------------- Code Loop ------------- #
 while True:
-
     touch = ts.touch_point
-
     light = light_sensor.value
-
     tempC = round(adt.temperature)
     tempF = tempC * 1.8 + 32
 
@@ -412,7 +408,7 @@ while True:
                     elif icon == 3:
                         icon_name = "Billie"
                     b.selected = False
-                    text_box(feed2_label, TABS_Y, 18,'Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name))
+                    text_box(feed2_label, TABS_Y,'Every time you tap the Icon button the icon image will change. Say hi to {}!'.format(icon_name), 18)
                     set_image(icon_group,"/images/"+icon_name+".bmp")
                 if i == 6 and view_live == 3: # button_sound pressed and view3 is visable
                     b.selected = True
