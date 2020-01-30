@@ -11,6 +11,7 @@ from adafruit_display_text.label import Label
 from adafruit_button import Button
 import adafruit_touchscreen
 from adafruit_pyportal import PyPortal
+from adafruit_display_shapes.rect import Rect
 
 # ------------- Inputs and Outputs Setup ------------- #
 # init. the temperature sensor
@@ -68,7 +69,7 @@ ts = adafruit_touchscreen.Touchscreen(board.TOUCH_YD, board.TOUCH_YU,
 
 
 # ------------- Display Groups ------------- #
-splash = displayio.Group(max_size=10) # The Main Display Group
+splash = displayio.Group(max_size=15) # The Main Display Group
 view1 = displayio.Group(max_size=15) # Group for View 1 objects
 view2 = displayio.Group(max_size=15) # Group for View 2 objects
 view3 = displayio.Group(max_size=15) # Group for View 3 objects
@@ -80,6 +81,7 @@ def hideLayer(i):
         pass
 
 def showLayer(i):
+    global rect
     try:
         time.sleep(0.1)
         splash.append(i)
@@ -312,7 +314,8 @@ button_switch.label = "OFF"
 button_switch.selected = True
 
 # Update out Labels with display text.
-text_box(feed1_label, TABS_Y, 'The text on this screen is wrapped so that it fits it all nicely in the text box. Each text line is {}px tall and the font is {}px tall.', 30)
+text_box(feed1_label, TABS_Y, 'The text on this screen is wrapped so that all of it fits nicely into a text box that is ### x ###.', 30)
+text_box(feed1_label, TABS_Y, 'The text on this screen is wrapped so that all of it fits nicely into a text box that is {} x {}.'.format(feed1_label.bounding_box[2], feed1_label.bounding_box[3]*2, feed1_label.line_spacing) , 30)
 
 text_box(feed2_label, TABS_Y, 'Tap on the Icon button to meet a new friend.', 18)
 
